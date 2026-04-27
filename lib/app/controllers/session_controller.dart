@@ -30,6 +30,11 @@ class SessionController extends GetxController {
   String get uid => _uid;
   bool get isDemoMode => _firestoreService.useDemoData;
 
+  /// Get current authenticated user from Firebase
+  User? getCurrentUser() {
+    return FirebaseAuth.instance.currentUser;
+  }
+
   Future<bool> bootstrap() async {
     if (_didBootstrap) {
       return profile.value != null;
@@ -49,10 +54,15 @@ class SessionController extends GetxController {
         profile.value = _localStorageService.getCachedProfile();
       } else {
         final auth = FirebaseAuth.instance;
-        if (auth.currentUser == null) {
-          await auth.signInAnonymously();
+        final currentUser = auth.currentUser;
+        
+        if (currentUser == null) {
+          // User is not authenticated
+          bootstrapError.value = 'User not authenticated';
+          return false;
         }
-        _uid = auth.currentUser?.uid ?? '';
+        
+        _uid = currentUser.uid;
         await _localStorageService.cacheUid(_uid);
         profile.value = await _firestoreService.fetchUserProfile(_uid);
       }
@@ -146,6 +156,19 @@ class SessionController extends GetxController {
       default:
         return error.message ??
             'Firebase authentication start করা যায়নি। Console setup আবার check করুন।';
+    }
+  }
+
+  /// Sign out the current user
+  Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      profile.value = null;
+      _uid = '';
+      _didBootstrap = false;
+      await _localStorageService.clearUid();
+    } catch (e) {
+      bootstrapError.value = 'Failed to logout: ${e.toString()}';
     }
   }
 }

@@ -29,4 +29,16 @@ class LocalStorageService {
   Future<void> cacheUid(String uid) {
     return _prefs.setString(_uidKey, uid);
   }
+
+  Future<void> clearUid() {
+    return _prefs.remove(_uidKey);
+  }
+
+  Future<void> clearProfile() {
+    return _prefs.remove(_profileKey);
+  }
+
+  Future<void> clearAll() {
+    return _prefs.clear();
+  }
 }

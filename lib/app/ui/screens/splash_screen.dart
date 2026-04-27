@@ -22,6 +22,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _bootstrapAndRoute() async {
     final session = Get.find<SessionController>();
+    
+    // Check if user is already authenticated
+    final user = session.getCurrentUser();
+    
+    if (user == null) {
+      // No authenticated user, go to sign in
+      Get.offAllNamed(AppRoutes.signIn);
+      return;
+    }
+    
+    // User is authenticated, bootstrap session
     final hasProfile = await session.bootstrap();
     if (!mounted || session.bootstrapError.value != null) {
       return;

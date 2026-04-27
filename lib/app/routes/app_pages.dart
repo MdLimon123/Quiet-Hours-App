@@ -8,11 +8,15 @@ import '../ui/screens/onboarding_screen.dart';
 import '../ui/screens/settings_screen.dart';
 import '../ui/screens/splash_screen.dart';
 import '../ui/screens/requests_screen.dart';
+import '../ui/screens/sign_in_screen.dart';
+import '../ui/screens/sign_up_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
   static final pages = <GetPage<dynamic>>[
     GetPage<dynamic>(name: AppRoutes.splash, page: SplashScreen.new),
+    GetPage<dynamic>(name: AppRoutes.signIn, page: SignInScreen.new),
+    GetPage<dynamic>(name: AppRoutes.signUp, page: SignUpScreen.new),
     GetPage<dynamic>(name: AppRoutes.onboarding, page: OnboardingScreen.new),
     GetPage<dynamic>(name: AppRoutes.shell, page: MainShellScreen.new),
     GetPage<dynamic>(
