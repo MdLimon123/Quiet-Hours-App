@@ -22,38 +22,44 @@ class MainShellScreen extends GetView<ShellController> {
 
     return Obx(
       () => Scaffold(
+        extendBody: true,
         body: IndexedStack(
           index: controller.currentIndex.value,
           children: screens,
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => Get.toNamed(AppRoutes.createRequest),
-          label: const Text('Quiet Now'),
-          icon: const Icon(Icons.notifications_paused_rounded),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: FloatingActionButton.extended(
+            onPressed: () => Get.toNamed(AppRoutes.createRequest),
+            icon: const Icon(Icons.notifications_paused_rounded, size: 22),
+            label: const Text('শান্ত সময়'),
+          ),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: controller.currentIndex.value,
           onDestinationSelected: controller.changeIndex,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: const <NavigationDestination>[
             NavigationDestination(
-              icon: Icon(Icons.dashboard_customize_outlined),
-              selectedIcon: Icon(Icons.dashboard_customize_rounded),
-              label: 'Home',
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'হোম',
             ),
             NavigationDestination(
               icon: Icon(Icons.graphic_eq_outlined),
               selectedIcon: Icon(Icons.graphic_eq_rounded),
-              label: 'Requests',
+              label: 'অনুরোধ',
             ),
             NavigationDestination(
               icon: Icon(Icons.notifications_none_rounded),
               selectedIcon: Icon(Icons.notifications_active_rounded),
-              label: 'Alerts',
+              label: 'অ্যালার্ট',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
               selectedIcon: Icon(Icons.settings_rounded),
-              label: 'Settings',
+              label: 'সেটিংস',
             ),
           ],
         ),

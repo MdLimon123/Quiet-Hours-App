@@ -30,11 +30,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  await notificationService.showLocalAlert(
-    title:
-        message.notification?.title ?? message.data['title'] ?? 'Quiet Hours',
-    body: message.notification?.body ?? message.data['body'] ?? '',
-  );
+  // Hybrid FCM payloads: OS tray already shows notification; duplicate local would stack twice.
+  if (NotificationService.shouldSkipManualShowBecausePlatformDisplayed(message)) {
+    return;
+  }
+
+  final (:title, :body) = NotificationService.remoteDisplayTexts(message);
+  await notificationService.showLocalAlert(title: title, body: body);
 }
 
 Future<void> main() async {

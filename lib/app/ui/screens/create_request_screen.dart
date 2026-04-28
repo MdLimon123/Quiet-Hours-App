@@ -105,7 +105,18 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
             ),
             const SizedBox(height: 16),
             Card(
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
               color: const Color(0xFFEAF7FC),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+                side: BorderSide(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.12),
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(

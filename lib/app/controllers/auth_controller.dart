@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../services/auth_service.dart';
+
 import '../routes/app_routes.dart';
+import '../services/auth_service.dart';
+import 'session_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = AuthService();
@@ -63,8 +65,13 @@ class AuthController extends GetxController {
 
       await _authService.signIn(email: email, password: password);
 
+      await Get.find<SessionController>().syncSessionAfterFirebaseAuth();
+
       clearFormFields();
-      Get.offAllNamed(AppRoutes.shell);
+
+      final hasProfile =
+          Get.find<SessionController>().profile.value != null;
+      Get.offAllNamed(hasProfile ? AppRoutes.shell : AppRoutes.onboarding);
     } catch (e) {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
       if (kDebugMode) print('Sign in error: $e');
@@ -121,6 +128,8 @@ class AuthController extends GetxController {
         password: password,
         name: name,
       );
+
+      await Get.find<SessionController>().syncSessionAfterFirebaseAuth();
 
       clearFormFields();
       Get.offAllNamed(AppRoutes.onboarding);

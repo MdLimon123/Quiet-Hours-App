@@ -64,18 +64,49 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Container(
-                    height: 88,
-                    width: 88,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.nights_stay_rounded,
-                      color: Colors.white,
-                      size: 42,
-                    ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Container(
+                        height: 128,
+                        width: 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 104,
+                        width: 104,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Container(
+                        height: 88,
+                        width: 88,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .18),
+                          shape: BoxShape.circle,
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.nights_stay_rounded,
+                          color: Colors.white,
+                          size: 42,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                   Text(

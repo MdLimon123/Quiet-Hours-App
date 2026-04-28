@@ -6,6 +6,7 @@ import 'app/controllers/quiet_hours_controller.dart';
 import 'app/controllers/session_controller.dart';
 import 'app/models/quiet_reason.dart';
 import 'app/routes/app_routes.dart';
+import 'app/theme/quiet_decorations.dart';
 
 class HomeScreen extends GetView<QuietHoursController> {
   const HomeScreen({super.key});
@@ -19,7 +20,7 @@ class HomeScreen extends GetView<QuietHoursController> {
 
       return SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 108),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -27,8 +28,9 @@ class HomeScreen extends GetView<QuietHoursController> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(28),
+                  boxShadow: QuietDecorations.cardShadow(context),
                   gradient: const LinearGradient(
-                    colors: <Color>[Color(0xFF123247), Color(0xFF146C94)],
+                    colors: <Color>[Color(0xFF0B2F45), Color(0xFF146C94)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -54,19 +56,9 @@ class HomeScreen extends GetView<QuietHoursController> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: <Widget>[
-                        _StatPill(
-                          label: 'Community',
-                          value: profile?.neighborhoodLabel ?? 'Not set',
-                        ),
-                        _StatPill(
-                          label: 'Mode',
-                          value: session.firebaseModeLabel.value,
-                        ),
-                      ],
+                    _StatPill(
+                      label: 'Community',
+                      value: profile?.neighborhoodLabel ?? 'Not set',
                     ),
                   ],
                 ),
@@ -84,34 +76,30 @@ class HomeScreen extends GetView<QuietHoursController> {
                 _QuickStartCard(
                   onCreate: () => Get.toNamed(AppRoutes.createRequest),
                 ),
-              const SizedBox(height: 24),
-              Text(
-                'দ্রুত অনুরোধ পাঠান',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              const SizedBox(height: 28),
+              const _SectionHeader(
+                icon: Icons.bolt_rounded,
+                title: 'দ্রুত অনুরোধ পাঠান',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               SizedBox(
-                height: 120,
+                height: 132,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) {
                     final reason = controller.quickReasons[index];
                     return _ReasonCard(reason: reason);
                   },
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (context, _) => const SizedBox(width: 12),
                   itemCount: controller.quickReasons.length,
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                'আশেপাশের লাইভ অনুরোধ',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              const SizedBox(height: 28),
+              const _SectionHeader(
+                icon: Icons.people_outline_rounded,
+                title: 'আশেপাশের লাইভ অনুরোধ',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               ...controller.requests
                   .take(4)
                   .map(
@@ -130,6 +118,56 @@ class HomeScreen extends GetView<QuietHoursController> {
         ),
       );
     });
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final primary = cs.primary;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 26, color: primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  height: 1.15,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                height: 3,
+                width: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(99),
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      primary,
+                      primary.withValues(alpha: 0.35),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -185,11 +223,21 @@ class _QuickStartCard extends StatelessWidget {
             Container(
               height: 56,
               width: 56,
-              decoration: const BoxDecoration(
-                color: Color(0xFFD8EFF7),
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: <Color>[
+                    const Color(0xFFD8EFF7),
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              child: const Icon(Icons.notifications_active_rounded),
+              child: Icon(
+                Icons.notifications_active_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -209,7 +257,10 @@ class _QuickStartCard extends StatelessWidget {
                 ],
               ),
             ),
-            FilledButton(onPressed: onCreate, child: const Text('সংকেত দিন')),
+            FilledButton.tonal(
+              onPressed: onCreate,
+              child: const Text('সংকেত দিন'),
+            ),
           ],
         ),
       ),
@@ -234,6 +285,10 @@ class _ActiveRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       color: const Color(0xFFFFF7E6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: Color(0xFFF0D099)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -273,31 +328,61 @@ class _ReasonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Get.toNamed(AppRoutes.createRequest, arguments: reason),
-      borderRadius: BorderRadius.circular(22),
-      child: Ink(
-        width: 180,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
+    final radius = BorderRadius.circular(22);
+    final tint = Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => Get.toNamed(
+          AppRoutes.createRequest,
+          arguments: reason,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Icon(reason.icon, color: const Color(0xFF146C94)),
-              const Spacer(),
-              Text(
-                reason.label,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 4),
-              Text(reason.shortHint),
-            ],
+        borderRadius: radius,
+        child: Ink(
+          width: 180,
+          height: 132,
+          decoration: QuietDecorations.softCard(context).copyWith(
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant.withValues(
+                    alpha: 0.35,
+                  ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(reason.icon, color: tint, size: 26),
+                ),
+                const Spacer(),
+                Text(
+                  reason.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reason.shortHint,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black.withValues(alpha: 0.68),
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -320,44 +405,80 @@ class _NeighborRequestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Container(
-              height: 46,
-              width: 46,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE5F3F8),
-                shape: BoxShape.circle,
+              width: 5,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: <Color>[
+                    primary,
+                    primary.withValues(alpha: 0.55),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
-              child: const Icon(Icons.waves_rounded, color: Color(0xFF146C94)),
             ),
-            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    '$name • $reason',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      height: 46,
+                      width: 46,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: <Color>[
+                            const Color(0xFFE5F3F8),
+                            primary.withValues(alpha: 0.06),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Icon(Icons.waves_rounded, color: primary),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    note.isEmpty
-                        ? 'ভদ্রভাবে কিছু সময় শান্ত পরিবেশ চাওয়া হয়েছে।'
-                        : note,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    remaining,
-                    style: const TextStyle(color: Color(0xFF146C94)),
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            '$name • $reason',
+                            style:
+                                Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            note.isEmpty
+                                ? 'ভদ্রভাবে কিছু সময় শান্ত পরিবেশ চাওয়া হয়েছে।'
+                                : note,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            remaining,
+                            style: TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

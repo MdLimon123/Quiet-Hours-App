@@ -65,11 +65,8 @@ class NotificationService {
       if (!_shouldDisplayMessage(message)) {
         return;
       }
-      final notification = message.notification;
-      await showLocalAlert(
-        title: notification?.title ?? message.data['title'] ?? 'Quiet Hours',
-        body: notification?.body ?? message.data['body'] ?? '',
-      );
+      final (:title, :body) = remoteDisplayTexts(message);
+      await showLocalAlert(title: title, body: body);
     });
   }
 
@@ -102,42 +99,122 @@ class NotificationService {
     if (!DefaultFirebaseOptions.isConfigured || neighborhoodId.isEmpty) {
       return;
     }
-    await FirebaseMessaging.instance.subscribeToTopic(_topic(neighborhoodId));
+    try {
+      await FirebaseMessaging.instance.subscribeToTopic(
+        _topic(neighborhoodId),
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('FCM subscribe failed for topic ${_topic(neighborhoodId)}: $e');
+        debugPrint('$st');
+      }
+    }
   }
 
   Future<void> unsubscribeFromNeighborhood(String neighborhoodId) async {
     if (!DefaultFirebaseOptions.isConfigured || neighborhoodId.isEmpty) {
       return;
     }
-    await FirebaseMessaging.instance.unsubscribeFromTopic(
-      _topic(neighborhoodId),
-    );
+    try {
+      await FirebaseMessaging.instance.unsubscribeFromTopic(
+        _topic(neighborhoodId),
+      );
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint(
+          'FCM unsubscribe failed for topic ${_topic(neighborhoodId)}: $e',
+        );
+        debugPrint('$st');
+      }
+    }
+  }
+
+  /// Strips zero-width / invisible chars that can break Android notification text.
+  static String sanitizeNotificationText(String? value) {
+    if (value == null || value.isEmpty) {
+      return '';
+    }
+    return value
+        .replaceAll(RegExp(r'[\u200B-\u200F\u2060-\u206F\uFEFF]'), '')
+        .replaceAll('\u00a0', ' ')
+        .trim();
+  }
+
+  /// Merges notification + data payloads ([functions/index.js] may send titles in [RemoteMessage.data] only).
+  static ({String title, String body}) remoteDisplayTexts(RemoteMessage message) {
+    final d = message.data;
+    final n = message.notification;
+
+    String fromData(String key) {
+      final v = d[key];
+      return sanitizeNotificationText(v == null ? '' : v.toString());
+    }
+
+    var title = sanitizeNotificationText(n?.title);
+    if (title.isEmpty) {
+      title = fromData('title');
+    }
+    if (title.isEmpty) {
+      title = fromData('alert');
+    }
+
+    var body = sanitizeNotificationText(n?.body);
+    if (body.isEmpty) {
+      body = fromData('body');
+    }
+    if (body.isEmpty) {
+      body = fromData('message');
+    }
+
+    if (title.isEmpty && body.isEmpty) {
+      return (title: '', body: '');
+    }
+    final displayTitle =
+        title.isEmpty ? 'Quiet Hours' : title;
+    return (title: displayTitle, body: body);
   }
 
   Future<void> showLocalAlert({
     required String title,
     required String body,
   }) async {
-    if (title.trim().isEmpty && body.trim().isEmpty) {
+    final rawTitle = sanitizeNotificationText(title);
+    final rawBody = sanitizeNotificationText(body);
+    if (rawTitle.isEmpty && rawBody.isEmpty) {
       return;
     }
-    const androidDetails = AndroidNotificationDetails(
+
+    final safeTitle = rawTitle.isEmpty ? 'Quiet Hours' : rawTitle;
+    final safeBody = rawBody;
+
+    final bigText =
+        safeBody.isNotEmpty ? safeBody : safeTitle;
+
+    final androidDetails = AndroidNotificationDetails(
       _alertsChannelId,
       _alertsChannelName,
       channelDescription: _alertsChannelDescription,
       importance: Importance.max,
       priority: Priority.high,
+      visibility: NotificationVisibility.public,
+      channelShowBadge: true,
+      styleInformation: BigTextStyleInformation(
+        bigText,
+        htmlFormatBigText: false,
+        contentTitle: safeTitle,
+        htmlFormatContentTitle: false,
+      ),
     );
     const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
     await _localNotifications.show(
       id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title: title,
-      body: body,
+      title: safeTitle,
+      body: safeBody.isNotEmpty ? safeBody : safeTitle,
       notificationDetails: details,
     );
   }
@@ -154,9 +231,17 @@ class NotificationService {
     RemoteMessage message, {
     required String? currentUserId,
   }) {
-    final senderUserId = message.data['senderUserId'];
+    final senderUserId =
+        message.data['senderUserId']?.toString();
     return senderUserId == null || senderUserId != currentUserId;
   }
+
+  /// If [RemoteMessage.notification] is present, OS usually shows tray + background isolate;
+  /// then skip [showLocalAlert] so the same ping is not duplicated.
+  static bool shouldSkipManualShowBecausePlatformDisplayed(
+    RemoteMessage message,
+  ) =>
+      message.notification != null;
 
   bool _shouldDisplayMessage(RemoteMessage message) {
     final currentUserId = _localStorageService?.getCachedUid();

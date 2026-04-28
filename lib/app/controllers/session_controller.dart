@@ -35,6 +35,52 @@ class SessionController extends GetxController {
     return FirebaseAuth.instance.currentUser;
   }
 
+  /// Call after successful email/password sign-in or sign-up so [_uid] is set
+  /// before onboarding or the main shell (skips splash [bootstrap]).
+  Future<void> syncSessionAfterFirebaseAuth() async {
+    if (isDemoMode) {
+      if (_uid.isEmpty) {
+        _uid = 'demo-neighbor-001';
+        await _localStorageService.cacheUid(_uid);
+      }
+      profile.value ??= _localStorageService.getCachedProfile();
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    _uid = user.uid;
+    await _localStorageService.cacheUid(_uid);
+
+    await _notificationService.requestNotificationPermission();
+
+    try {
+      profile.value = await _firestoreService.fetchUserProfile(_uid);
+    } catch (_) {
+      profile.value = null;
+    }
+
+    final existingProfile = profile.value;
+    if (existingProfile != null) {
+      try {
+        await _notificationService.requestNotificationPermission();
+        if (existingProfile.notificationsEnabled) {
+          await _notificationService.subscribeToNeighborhood(
+            existingProfile.neighborhoodId,
+          );
+        }
+      } catch (_) {
+        // uid is still valid; notifications are best-effort
+      }
+    }
+
+    firebaseModeLabel.value = 'Firebase live mode';
+    _didBootstrap = true;
+  }
+
   Future<bool> bootstrap() async {
     if (_didBootstrap) {
       return profile.value != null;
@@ -64,6 +110,7 @@ class SessionController extends GetxController {
         
         _uid = currentUser.uid;
         await _localStorageService.cacheUid(_uid);
+        await _notificationService.requestNotificationPermission();
         profile.value = await _firestoreService.fetchUserProfile(_uid);
       }
 
@@ -107,6 +154,13 @@ class SessionController extends GetxController {
     required String apartmentLabel,
     required bool notificationsEnabled,
   }) async {
+    if (_uid.isEmpty) {
+      await syncSessionAfterFirebaseAuth();
+    }
+    if (_uid.isEmpty) {
+      throw StateError('No active user id. Please sign in again.');
+    }
+
     final now = DateTime.now();
     final neighborhoodId = _slugifyNeighborhood(neighborhoodLabel);
 

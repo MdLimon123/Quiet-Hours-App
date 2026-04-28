@@ -30,16 +30,25 @@ exports.sendQuietRequestNotification = onDocumentCreated(
 
     await admin.messaging().send({
       topic,
-      data: {
-        type: "quiet_request_created",
-        requestId: snapshot.id,
-        neighborhoodId: neighborhoodId,
-        senderUserId: senderUserId,
+      notification: {
         title,
         body,
       },
+      data: {
+        type: "quiet_request_created",
+        requestId: String(snapshot.id),
+        neighborhoodId: String(neighborhoodId ?? ""),
+        senderUserId: String(senderUserId ?? ""),
+        title: String(title ?? ""),
+        body: String(body ?? ""),
+      },
       android: {
         priority: "high",
+        notification: {
+          channelId: "quiet_hours_alerts",
+          defaultSound: true,
+          visibility: "public",
+        },
       },
       apns: {
         headers: {
@@ -47,6 +56,8 @@ exports.sendQuietRequestNotification = onDocumentCreated(
         },
         payload: {
           aps: {
+            badge: 1,
+            sound: "default",
             contentAvailable: true,
           },
         },
